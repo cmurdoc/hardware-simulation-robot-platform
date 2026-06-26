@@ -121,7 +121,8 @@ You MUST respond ONLY with a raw JSON object (no other text, no markdown blocks)
           images: imagesArray,
           options: {
             temperature: 0.2,
-            num_ctx: 2048
+            num_ctx: 8192,
+            num_predict: 1024
           }
         })
       });
