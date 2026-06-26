@@ -22,6 +22,9 @@ function resolveEndpoint(endpoint) {
   if (endpoint && (endpoint.includes('localhost:8000') || endpoint.includes('127.0.0.1:8000'))) {
     return '/custom-api';
   }
+  if (endpoint && (endpoint.includes('localhost:11434') || endpoint.includes('127.0.0.1:11434'))) {
+    return '/ollama-api';
+  }
   return endpoint;
 }
 
@@ -30,8 +33,9 @@ export const ollamaService = {
    * Check connection to Ollama server by fetching models
    */
   async checkConnection(endpoint = 'http://localhost:11434') {
+    const target = resolveEndpoint(endpoint);
     try {
-      const response = await fetch(`${endpoint}/api/tags`, {
+      const response = await fetch(`${target}/api/tags`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -46,8 +50,9 @@ export const ollamaService = {
    * Fetch all installed models on the local Ollama server
    */
   async fetchModels(endpoint = 'http://localhost:11434') {
+    const target = resolveEndpoint(endpoint);
     try {
-      const response = await fetch(`${endpoint}/api/tags`);
+      const response = await fetch(`${target}/api/tags`);
       if (!response.ok) throw new Error('Failed to fetch models');
       const data = await response.json();
       return data.models || [];
@@ -62,6 +67,7 @@ export const ollamaService = {
    * Returns a JSON object with decision keys: left_motor, right_motor, thought, mental_map, anomaly_detected
    */
   async queryAI(endpoint, model, systemPrompt, history, currentSensor, mentalMapState) {
+    const target = resolveEndpoint(endpoint);
     try {
       const prompt = `
 [CURRENT SENSOR INPUT]
@@ -95,7 +101,7 @@ You MUST respond ONLY with a raw JSON object (no other text, no markdown blocks)
 }
 `;
 
-      const response = await fetch(`${endpoint}/api/generate`, {
+      const response = await fetch(`${target}/api/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
