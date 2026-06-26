@@ -127,7 +127,9 @@ You MUST respond ONLY with a raw JSON object (no other text, no markdown blocks)
       });
 
       if (!response.ok) {
-        throw new Error(`Ollama request failed with status ${response.status}`);
+        const errText = await response.text().catch(() => '');
+        console.error(`Ollama request failed: Status ${response.status}, Error:`, errText);
+        throw new Error(`Ollama request failed with status ${response.status}: ${errText}`);
       }
 
       const data = await response.json();

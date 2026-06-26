@@ -72,9 +72,10 @@ export default function App() {
 
 Kinematics & Movement Guidelines to prevent spinning in circles:
 - Drive forward: Set left_motor and right_motor to equal positive values (e.g., left_motor=0.5, right_motor=0.5).
-- Turn left or right: Set one motor speed higher than the other (e.g., left_motor=0.6, right_motor=0.2 to turn right, or left_motor=0.2, right_motor=0.6 to turn left).
-- Do NOT spin in place indefinitely (e.g., left_motor=0.4, right_motor=-0.4). Only spin in place for a single step to adjust your heading, then set both motors to positive values to drive forward and explore. If you spin in place every step, you will be stuck in one spot!
-- If the ultrasonic sensor reads an obstacle very close (distance < 30cm), reverse immediately (e.g. left_motor=-0.4, right_motor=-0.4) for a step, then turn, and then drive forward.`
+- Turn left or right while moving forward: BOTH motors must be positive (e.g., left_motor=0.6, right_motor=0.2 to steer right, or left_motor=0.2, right_motor=0.6 to steer left). Do not make one motor negative when turning.
+- Spin in place (opposing signs, e.g. left_motor=-0.4, right_motor=0.4): Only do this for a single step to adjust heading if you are facing a wall. Never spin in place for consecutive steps, or you will get stuck in a circle.
+- Drive forward after turning: After any turn or spin step, you must immediately drive straight forward (e.g., 0.5, 0.5) to explore new space.
+- Obstacle recovery: If the ultrasonic sensor reads an obstacle very close (distance < 30cm), reverse (e.g. left_motor=-0.4, right_motor=-0.4) for a step, spin in place for one step, and then drive forward.`
   );
   const [isOllamaConnected, setIsOllamaConnected] = useState(false);
   const [ollamaModels, setOllamaModels] = useState([]);
