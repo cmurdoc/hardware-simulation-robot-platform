@@ -385,7 +385,8 @@ void driveMotors(float left, float right) {
             curPrompt,
             aiActionHistory.current,
             { ...sensorsPayload, angle: (curRobotState.angle * 180) / Math.PI },
-            curMentalMap
+            curMentalMap,
+            curFrame
           );
 
           setMentalMap(typeof result.mental_map === 'object' ? JSON.stringify(result.mental_map, null, 2) : (result.mental_map || ''));

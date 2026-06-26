@@ -66,7 +66,7 @@ export const ollamaService = {
    * Query the selected model on Ollama
    * Returns a JSON object with decision keys: left_motor, right_motor, thought, mental_map, anomaly_detected
    */
-  async queryAI(endpoint, model, systemPrompt, history, currentSensor, mentalMapState) {
+  async queryAI(endpoint, model, systemPrompt, history, currentSensor, mentalMapState, imageBase64 = null) {
     const target = resolveEndpoint(endpoint);
     try {
       const prompt = `
@@ -101,6 +101,15 @@ You MUST respond ONLY with a raw JSON object (no other text, no markdown blocks)
 }
 `;
 
+      let imagesArray = undefined;
+      if (imageBase64) {
+        let rawBase64 = imageBase64;
+        if (rawBase64.includes(',')) {
+          rawBase64 = rawBase64.split(',')[1];
+        }
+        imagesArray = [rawBase64];
+      }
+
       const response = await fetch(`${target}/api/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -109,6 +118,7 @@ You MUST respond ONLY with a raw JSON object (no other text, no markdown blocks)
           system: systemPrompt,
           prompt: prompt,
           stream: false,
+          images: imagesArray,
           options: {
             temperature: 0.2,
             num_ctx: 2048
