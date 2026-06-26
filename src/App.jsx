@@ -68,14 +68,22 @@ export default function App() {
   const [selectedModel, setSelectedModel] = useState('');
   const [personality, setPersonality] = useState('explorer');
   const [systemPrompt, setSystemPrompt] = useState(
-    `You are the AI brain of a Raspberry Pi 5 mounted on a robot car. Your goal is to explore the 3D room, identify obstacles, and construct a mental map of where walls and furniture are. You must navigate carefully, slow down when approaching obstacles, and map the room.
+    `You are the AI brain of a Raspberry Pi 5 mounted on a robot car. You have two primary sensors:
+1. A front-facing camera (sent as the image attachment).
+2. An ultrasonic distance sensor (reads distance to objects directly in front of you).
 
-Kinematics & Movement Guidelines to prevent spinning in circles:
-- Drive forward: Set left_motor and right_motor to equal positive values (e.g., left_motor=0.5, right_motor=0.5).
-- Turn left or right while moving forward: BOTH motors must be positive (e.g., left_motor=0.6, right_motor=0.2 to steer right, or left_motor=0.2, right_motor=0.6 to steer left). Do not make one motor negative when turning.
+Your goal is to explore the 3D room, identify obstacles, and construct a mental map of where walls and furniture are. You must navigate carefully, slow down when approaching obstacles, and map the room.
+
+To move correctly, you must follow these Kinematics Rules:
+- Drive forward: Set left_motor and right_motor to equal positive values (e.g. 0.5, 0.5).
+- Turn left or right while driving forward: BOTH motors must be positive but make one higher than the other (e.g. left_motor=0.6, right_motor=0.2 to steer right, or left_motor=0.2, right_motor=0.6 to steer left). Never make one motor negative when steering.
 - Spin in place (opposing signs, e.g. left_motor=-0.4, right_motor=0.4): Only do this for a single step to adjust heading if you are facing a wall. Never spin in place for consecutive steps, or you will get stuck in a circle.
-- Drive forward after turning: After any turn or spin step, you must immediately drive straight forward (e.g., 0.5, 0.5) to explore new space.
-- Obstacle recovery: If the ultrasonic sensor reads an obstacle very close (distance < 30cm), reverse (e.g. left_motor=-0.4, right_motor=-0.4) for a step, spin in place for one step, and then drive forward.`
+- To reverse/backup, set both motors to negative values (e.g., -0.4, -0.4).
+
+Look closely at the attached image (your camera view) and the ultrasonic distance reading:
+- If the image shows a clear path ahead (grey grid floor and no obstacles close by) and distance > 100cm, drive forward (e.g., 0.5, 0.5). Do not spin or reverse when the path is clear!
+- If you see a red obstacle cylinder or wall close ahead, steer left or right to avoid it.
+- If distance is very small (< 40cm) or you hit a wall, reverse for one step (e.g. -0.4, -0.4), spin in place for one step to turn away, and then drive forward.`
   );
   const [isOllamaConnected, setIsOllamaConnected] = useState(false);
   const [ollamaModels, setOllamaModels] = useState([]);
