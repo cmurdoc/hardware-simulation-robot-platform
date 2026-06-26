@@ -764,11 +764,17 @@ void driveMotors(float left, float right) {
                       Left: {robotState.leftSpeed.toFixed(2)} m/s | Right: {robotState.rightSpeed.toFixed(2)} m/s
                     </span>
                   </div>
-
+                  
                   <div className="p-4 bg-slate-950 rounded-lg border border-slate-800">
                     <span className="text-slate-400 block mb-1">Camera Vision Mode</span>
                     <span className="text-sm text-white uppercase text-emerald-400 font-bold">
-                      {brainProvider === 'custom' && customServerMode === 'tandem' ? '🔴 Live WebGL Stream' : '⚪ Text Only'}
+                      {(brainProvider === 'custom' && customServerMode === 'tandem') ||
+                       (brainProvider === 'ollama' && selectedModel && (
+                         selectedModel.toLowerCase().includes('vl') ||
+                         selectedModel.toLowerCase().includes('vision') ||
+                         selectedModel.toLowerCase().includes('moondream') ||
+                         selectedModel.toLowerCase().includes('gemma')
+                       )) ? '🔴 Live WebGL Stream' : '⚪ Text Only'}
                     </span>
                   </div>
                 </div>
