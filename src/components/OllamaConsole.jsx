@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Cpu, RefreshCw, CheckCircle2, AlertTriangle, Terminal, Eye, MessageSquare } from 'lucide-react';
 import { ollamaService } from '../services/ollamaService';
 
@@ -91,7 +91,7 @@ export default function OllamaConsole({
   piLogs,
   clearPiLogs,
   mentalMap,
-  setMentalMap,
+  _setMentalMap,
   anomalyDetected,
   // Custom server settings
   brainProvider,
@@ -110,7 +110,7 @@ export default function OllamaConsole({
     setSystemPrompt(PERSONALITIES[key].prompt);
   };
 
-  const refreshAI = async () => {
+  const refreshAI = useCallback(async () => {
     setLoadingModels(true);
     try {
       if (brainProvider === 'ollama') {
@@ -130,17 +130,18 @@ export default function OllamaConsole({
         const connected = await ollamaService.checkCustomConnection(customEndpoint);
         setIsConnected(connected);
       }
-    } catch (e) {
+    } catch (err) {
+      void err;
       setIsConnected(false);
       setModels([]);
     } finally {
       setLoadingModels(false);
     }
-  };
+  }, [brainProvider, customEndpoint, endpoint, selectedModel, setIsConnected, setModels, setSelectedModel]);
 
   useEffect(() => {
     refreshAI();
-  }, [endpoint, customEndpoint, brainProvider]);
+  }, [endpoint, customEndpoint, brainProvider, refreshAI]);
 
   return (
     <div className="flex flex-col h-full bg-slate-900 border border-slate-700/50 rounded-xl overflow-hidden shadow-2xl backdrop-blur-md">

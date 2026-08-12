@@ -182,7 +182,7 @@ export default function WiringCanvas({
         (w.fromComponent === 'sensor' && w.fromPin === 'VCC' && w.toComponent === 'arduino' && w.toPin === '5V') ||
         (w.toComponent === 'sensor' && w.toPin === 'VCC' && w.fromComponent === 'arduino' && w.fromPin === '5V')
       );
-      const gndWired = wires.some(w => 
+      const _gndWired = wires.some(w =>
         (w.fromComponent === 'sensor' && w.fromPin === 'GND' && (w.toPin.startsWith('GND') || w.toPin === 'GND2'))
       );
 

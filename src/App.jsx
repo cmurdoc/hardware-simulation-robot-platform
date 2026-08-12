@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, RotateCcw, Cpu, Code, MapPin, Activity, HelpCircle, ShieldAlert } from 'lucide-react';
+import { Play, Pause, RotateCcw, Cpu, Code, MapPin, Activity, ShieldAlert } from 'lucide-react';
 import WiringCanvas from './components/WiringCanvas';
 import SimulationArena3D from './components/SimulationArena3D';
 import ArduinoEditor from './components/ArduinoEditor';
@@ -291,7 +291,7 @@ void driveMotors(float left, float right) {
       
       try {
         const runner = arduinoInterpreter.run(translated, {
-          onPinWrite: (pin, val, isAnalog) => {},
+          onPinWrite: (_pin, _val, _isAnalog) => {},
           onSerialWrite: (dataString) => {
             // Log raw output
             setSerialLogs(prev => {
