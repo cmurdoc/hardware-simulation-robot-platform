@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, memo } from 'react';
 import { Plus, Trash2, HelpCircle, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 // Pin definitions with local coordinates relative to component dimensions
@@ -124,7 +124,7 @@ const COMPONENT_SCHEMATICS = {
   }
 };
 
-export default function WiringCanvas({
+const WiringCanvas = memo(function WiringCanvas({
   components,
   setComponents,
   wires,
@@ -683,4 +683,6 @@ export default function WiringCanvas({
       </div>
     </div>
   );
-}
+});
+
+export default WiringCanvas;
