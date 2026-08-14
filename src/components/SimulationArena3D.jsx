@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
@@ -426,6 +426,7 @@ export default function SimulationArena3D({
       }
       pipRenderer.dispose();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomWidth, roomDepth, isRunning]);
 
   // Update Robot Mesh Position, Rotation & Sensor line in 3D
@@ -488,6 +489,7 @@ export default function SimulationArena3D({
     if (onSensorDistanceUpdate) {
       onSensorDistanceUpdate(robotState.sensorDistance);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [robotState, isRunning]);
 
   // Sync Obstacles mesh positions
@@ -626,7 +628,8 @@ export default function SimulationArena3D({
             }
           });
         }
-      } catch (e) {
+      } catch (err) {
+        void err;
         // Not valid JSON, process text directly
       }
 
@@ -639,7 +642,7 @@ export default function SimulationArena3D({
       }
 
       // Pattern B: Match standard coordinates inside parentheses or square brackets like (-1.2, 0.4) or [2, -1]
-      const parenRegex = /[\[({]\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*[\])}]/g;
+      const parenRegex = /[[({]\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*[\])}]/g;
       while ((match = parenRegex.exec(mentalMap)) !== null) {
         addPoint(parseFloat(match[1]), parseFloat(match[2]));
       }

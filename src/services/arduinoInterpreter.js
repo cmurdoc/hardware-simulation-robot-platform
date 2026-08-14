@@ -140,7 +140,7 @@ export const arduinoInterpreter = {
       return pinStates[pinKey] ? pinStates[pinKey].value : 0;
     };
 
-    const pulseIn = async (pin, state) => {
+    const pulseIn = async (_pin, _state) => {
       // Simulates ultrasonic pulse duration based on raycast distance
       // Distance = duration * 0.034 / 2 => duration = distance * 2 / 0.034
       const dist = getSensorDistance() || 400; // cm
