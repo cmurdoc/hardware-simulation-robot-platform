@@ -2,7 +2,7 @@ import puppeteer from 'puppeteer';
 import path from 'path';
 
 // Artifact directory for saving screenshots
-const ARTIFACT_DIR = '/Users/curtispenick/.gemini/antigravity/brain/58f08bf8-26de-41e8-9672-e57951be959b';
+const ARTIFACT_DIR = '/tmp';
 
 async function runTest() {
   console.log('🚀 Starting automated browser integration tests against Local Port 8000...');
