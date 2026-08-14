@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, memo } from 'react';
 import { Plus, Trash2, HelpCircle, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 // Pin definitions with local coordinates relative to component dimensions
@@ -124,7 +124,11 @@ const COMPONENT_SCHEMATICS = {
   }
 };
 
-export default function WiringCanvas({
+// ⚡ Bolt: Wrapped WiringCanvas in React.memo to prevent unnecessary re-renders.
+// The parent App.jsx runs a 60FPS physics loop that updates robotState.
+// Since WiringCanvas is a heavy SVG component and only depends on circuit state (components, wires),
+// memoizing it isolates it from the fast physics tick, preventing render starvation and saving CPU cycles.
+const WiringCanvas = memo(function WiringCanvas({
   components,
   setComponents,
   wires,
@@ -683,4 +687,6 @@ export default function WiringCanvas({
       </div>
     </div>
   );
-}
+});
+
+export default WiringCanvas;
