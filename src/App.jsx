@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Play, Pause, RotateCcw, Cpu, Code, MapPin, Activity, ShieldAlert } from 'lucide-react';
 import WiringCanvas from './components/WiringCanvas';
 import SimulationArena3D from './components/SimulationArena3D';
@@ -274,8 +274,14 @@ void driveMotors(float left, float right) {
     return defaultValue;
   };
 
+  const clearSerialLogs = useCallback(() => setSerialLogs([]), []);
+  const sendSerialInput = useCallback((cmd) => {
+    if (activeArduinoRunner.current) activeArduinoRunner.current.sendSerial(cmd);
+  }, []);
+  const clearPiLogs = useCallback(() => setPiLogs([]), []);
+
   // Compile and upload Arduino Sketch
-  const handleCompileAndUpload = () => {
+  const handleCompileAndUpload = useCallback(() => {
     setIsCompiling(true);
     setSerialLogs(prev => [...prev, '--- Compiling Arduino Sketch C++ ---']);
     
@@ -334,7 +340,8 @@ void driveMotors(float left, float right) {
       }
       setIsCompiling(false);
     }, 800);
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [arduinoCode]); // activeArduinoRunner and arduinoInterpreter are stable references outside state
 
   // Pi 5 Serial Listener (utilizes live stateRef variables)
   const handlePiSerialReceive = async (distance) => {
@@ -663,10 +670,8 @@ void driveMotors(float left, float right) {
                 setCode={setArduinoCode}
                 onUpload={handleCompileAndUpload}
                 serialLogs={serialLogs}
-                clearLogs={() => setSerialLogs([])}
-                sendSerialInput={(cmd) => {
-                  if (activeArduinoRunner.current) activeArduinoRunner.current.sendSerial(cmd);
-                }}
+                clearLogs={clearSerialLogs}
+                sendSerialInput={sendSerialInput}
                 isCompiling={isCompiling}
               />
             )}
@@ -685,7 +690,7 @@ void driveMotors(float left, float right) {
                 models={ollamaModels}
                 setModels={setOllamaModels}
                 piLogs={piLogs}
-                clearPiLogs={() => setPiLogs([])}
+                clearPiLogs={clearPiLogs}
                 mentalMap={mentalMap}
                 setMentalMap={setMentalMap}
                 anomalyDetected={anomalyDetected}

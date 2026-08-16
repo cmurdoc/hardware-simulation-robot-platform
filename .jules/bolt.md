@@ -1,3 +1,6 @@
 ## 2024-05-24 - [React Render Starvation with 60FPS Physics Loop]
 **Learning:** The application features a 60FPS physics loop in `App.jsx` that frequently updates global state (`robotState`). The entire component tree was re-rendering 60 times per second, causing render starvation. Pure UI or computationally heavy child components (like SVG canvases in `WiringCanvas`) that do not depend on the fast-changing state must be wrapped in `React.memo()` to prevent unnecessary re-renders.
 **Action:** When implementing heavy visual components in a physics-based simulation architecture, always separate the fast-changing state from the static UI and use `React.memo()` to isolate updates.
+## 2024-05-24 - [React.memo() Requires Stable Props]
+**Learning:** When using `React.memo()` to prevent render starvation from the 60FPS loop, simply wrapping the component is not enough. You must also ensure that the parent (`App.jsx`) passes stable function references down to these children using `useCallback()`. A custom `arePropsEqual` comparator that ignores unstable functions is an anti-pattern and can lead to stale closures.
+**Action:** When implementing `React.memo()`, always check the parent component to stabilize function props with `useCallback()`. Do not use custom comparators to ignore function props.
