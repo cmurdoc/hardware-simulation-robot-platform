@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
@@ -504,6 +504,76 @@ export default function SimulationArena3D({
     });
   }, [obstacles]);
 
+  // ⚡ Bolt: Caching Expensive Mental Map Parsing
+  // This extracts the heavy JSON parsing and repeated regex executions out of the 60FPS render loop.
+  // We only run this when mentalMap string changes.
+  const parsedMentalMapPoints = useMemo(() => {
+    let parsedPoints = [];
+    const seenPoints = new Set();
+    const addPoint = (x, z) => {
+      if (x >= -roomWidth / 2 - 1.5 && x <= roomWidth / 2 + 1.5 &&
+          z >= -roomDepth / 2 - 1.5 && z <= roomDepth / 2 + 1.5) {
+        const key = `${x.toFixed(2)},${z.toFixed(2)}`;
+        if (!seenPoints.has(key)) {
+          seenPoints.add(key);
+          parsedPoints.push({ x, z });
+        }
+      }
+    };
+
+    if (mentalMap) {
+      // Clean up markdown code blocks if embedded
+      let cleanText = mentalMap.trim();
+      if (cleanText.includes('```') || cleanText.includes('{')) {
+        const startIdx = cleanText.indexOf('{');
+        const endIdx = cleanText.lastIndexOf('}');
+        if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
+          cleanText = cleanText.substring(startIdx, endIdx + 1);
+        }
+      }
+
+      // Try parsing as JSON first
+      try {
+        const parsed = JSON.parse(cleanText);
+        // Look for items array or obstacles array
+        const obsList = parsed.obstacles || parsed.objects || parsed.obstacles_perceived || [];
+        if (Array.isArray(obsList)) {
+          obsList.forEach(obs => {
+            const px = obs.x !== undefined ? obs.x : obs.pos_x;
+            const pz = obs.z !== undefined ? obs.z : (obs.y !== undefined ? obs.y : obs.pos_z);
+            if (px !== undefined && pz !== undefined) {
+              addPoint(Number(px), Number(pz));
+            }
+          });
+        }
+      } catch (err) {
+        void err;
+        // Not valid JSON, process text directly
+      }
+
+      // Also parse using regex to find coordinate mentions anywhere in text or JSON fields
+      // Pattern A: Match labelled coordinates like x: 1.2, z: -2.3 or x=1.2, y=-2.3 (case insensitive)
+      const labelRegex = /\b[Xx]\s*[:=]?\s*(-?\d+(?:\.\d+)?)\b[\s,;]*\b[ZzYy]\s*[:=]?\s*(-?\d+(?:\.\d+)?)\b/g;
+      let match;
+      while ((match = labelRegex.exec(mentalMap)) !== null) {
+        addPoint(parseFloat(match[1]), parseFloat(match[2]));
+      }
+
+      // Pattern B: Match standard coordinates inside parentheses or square brackets like (-1.2, 0.4) or [2, -1]
+      const parenRegex = /[[({]\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*[\])}]/g;
+      while ((match = parenRegex.exec(mentalMap)) !== null) {
+        addPoint(parseFloat(match[1]), parseFloat(match[2]));
+      }
+
+      // Pattern C: Match raw comma separated number pairs like "1.2, -0.4"
+      const rawRegex = /(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/g;
+      while ((match = rawRegex.exec(mentalMap)) !== null) {
+        addPoint(parseFloat(match[1]), parseFloat(match[2]));
+      }
+    }
+    return parsedPoints;
+  }, [mentalMap, roomWidth, roomDepth]);
+
   // Render AI Mental Map Birds-Eye View
   useEffect(() => {
     const canvas = minimapCanvasRef.current;
@@ -589,73 +659,8 @@ export default function SimulationArena3D({
     ctx.lineTo(hx, hy);
     ctx.stroke();
 
-    // 2. Parse and Draw Mental Map Points
-    let parsedPoints = [];
-    const seenPoints = new Set();
-    const addPoint = (x, z) => {
-      if (x >= -roomWidth / 2 - 1.5 && x <= roomWidth / 2 + 1.5 &&
-          z >= -roomDepth / 2 - 1.5 && z <= roomDepth / 2 + 1.5) {
-        const key = `${x.toFixed(2)},${z.toFixed(2)}`;
-        if (!seenPoints.has(key)) {
-          seenPoints.add(key);
-          parsedPoints.push({ x, z });
-        }
-      }
-    };
-
-    if (mentalMap) {
-      // Clean up markdown code blocks if embedded
-      let cleanText = mentalMap.trim();
-      if (cleanText.includes('```') || cleanText.includes('{')) {
-        const startIdx = cleanText.indexOf('{');
-        const endIdx = cleanText.lastIndexOf('}');
-        if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
-          cleanText = cleanText.substring(startIdx, endIdx + 1);
-        }
-      }
-
-      // Try parsing as JSON first
-      try {
-        const parsed = JSON.parse(cleanText);
-        // Look for items array or obstacles array
-        const obsList = parsed.obstacles || parsed.objects || parsed.obstacles_perceived || [];
-        if (Array.isArray(obsList)) {
-          obsList.forEach(obs => {
-            const px = obs.x !== undefined ? obs.x : obs.pos_x;
-            const pz = obs.z !== undefined ? obs.z : (obs.y !== undefined ? obs.y : obs.pos_z);
-            if (px !== undefined && pz !== undefined) {
-              addPoint(Number(px), Number(pz));
-            }
-          });
-        }
-      } catch (err) {
-        void err;
-        // Not valid JSON, process text directly
-      }
-
-      // Also parse using regex to find coordinate mentions anywhere in text or JSON fields
-      // Pattern A: Match labelled coordinates like x: 1.2, z: -2.3 or x=1.2, y=-2.3 (case insensitive)
-      const labelRegex = /\b[Xx]\s*[:=]?\s*(-?\d+(?:\.\d+)?)\b[\s,;]*\b[ZzYy]\s*[:=]?\s*(-?\d+(?:\.\d+)?)\b/g;
-      let match;
-      while ((match = labelRegex.exec(mentalMap)) !== null) {
-        addPoint(parseFloat(match[1]), parseFloat(match[2]));
-      }
-
-      // Pattern B: Match standard coordinates inside parentheses or square brackets like (-1.2, 0.4) or [2, -1]
-      const parenRegex = /[[({]\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*[\])}]/g;
-      while ((match = parenRegex.exec(mentalMap)) !== null) {
-        addPoint(parseFloat(match[1]), parseFloat(match[2]));
-      }
-
-      // Pattern C: Match raw comma separated number pairs like "1.2, -0.4"
-      const rawRegex = /(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/g;
-      while ((match = rawRegex.exec(mentalMap)) !== null) {
-        addPoint(parseFloat(match[1]), parseFloat(match[2]));
-      }
-    }
-
     // Draw AI Perceived points (Magenta stars/dots)
-    parsedPoints.forEach(pt => {
+    parsedMentalMapPoints.forEach(pt => {
       const px = toCanvasX(pt.x);
       const py = toCanvasY(pt.z);
 
@@ -676,7 +681,7 @@ export default function SimulationArena3D({
       }
     });
 
-  }, [mentalMap, robotState, roomWidth, roomDepth]);
+  }, [parsedMentalMapPoints, robotState, roomWidth, roomDepth]);
 
   return (
     <div className="relative w-full h-full min-h-[400px] flex flex-col bg-slate-900 border border-slate-700/50 rounded-xl overflow-hidden shadow-2xl backdrop-blur-md">
