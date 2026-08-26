@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Play, Pause, RotateCcw, Cpu, Code, MapPin, Activity, ShieldAlert } from 'lucide-react';
 import WiringCanvas from './components/WiringCanvas';
 import SimulationArena3D from './components/SimulationArena3D';
@@ -274,70 +274,8 @@ void driveMotors(float left, float right) {
     return defaultValue;
   };
 
-  // Compile and upload Arduino Sketch
-  const handleCompileAndUpload = () => {
-    setIsCompiling(true);
-    setSerialLogs(prev => [...prev, '--- Compiling Arduino Sketch C++ ---']);
-    
-    setTimeout(() => {
-      if (activeArduinoRunner.current) {
-        activeArduinoRunner.current.stop();
-      }
-
-      // Reset the lines buffer
-      serialRxBufferRef.current = '';
-
-      const translated = arduinoInterpreter.translate(arduinoCode);
-      
-      try {
-        const runner = arduinoInterpreter.run(translated, {
-          onPinWrite: (_pin, _val, _isAnalog) => {},
-          onSerialWrite: (dataString) => {
-            // Log raw output
-            setSerialLogs(prev => {
-              const current = [...prev];
-              if (current.length > 50) current.shift();
-              return [...current, dataString.trim()];
-            });
-
-            // Line-buffering stream solver to handle fragmented Serial prints
-            serialRxBufferRef.current += dataString;
-            let lines = serialRxBufferRef.current.split('\n');
-            serialRxBufferRef.current = lines.pop(); // Keep last fragment
-
-            for (const line of lines) {
-              const trimmed = line.trim();
-              if (trimmed.startsWith('D:')) {
-                const distVal = parseFloat(trimmed.substring(2));
-                if (!isNaN(distVal)) {
-                  handlePiSerialReceive(distVal);
-                }
-              }
-            }
-          },
-          getSensorDistance: () => {
-            return stateRef.current.robotState.sensorDistance;
-          },
-          onError: (err) => {
-            setSerialLogs(prev => [...prev, `⚠️ [Runtime Error] ${err}`]);
-            setSimulationRunning(false);
-          },
-          onDebug: (msg) => {
-            setSerialLogs(prev => [...prev, `[Debug] ${msg}`]);
-          }
-        });
-
-        activeArduinoRunner.current = runner;
-        setSerialLogs(prev => [...prev, '✅ Upload complete. Sketch running.']);
-      } catch (err) {
-        setSerialLogs(prev => [...prev, `❌ Compilation Failed: ${err.message}`]);
-      }
-      setIsCompiling(false);
-    }, 800);
-  };
-
   // Pi 5 Serial Listener (utilizes live stateRef variables)
-  const handlePiSerialReceive = async (distance) => {
+  const handlePiSerialReceive = useCallback(async (distance) => {
     const {
       components: curComps,
       wires: curWires,
@@ -481,7 +419,75 @@ void driveMotors(float left, float right) {
         setIsAiThinking(false);
       }
     }
-  };
+  }, [isAiThinking]);
+
+  // Compile and upload Arduino Sketch
+  const handleCompileAndUpload = useCallback(() => {
+    setIsCompiling(true);
+    setSerialLogs(prev => [...prev, '--- Compiling Arduino Sketch C++ ---']);
+
+    setTimeout(() => {
+      if (activeArduinoRunner.current) {
+        activeArduinoRunner.current.stop();
+      }
+
+      // Reset the lines buffer
+      serialRxBufferRef.current = '';
+
+      const translated = arduinoInterpreter.translate(arduinoCode);
+
+      try {
+        const runner = arduinoInterpreter.run(translated, {
+          onPinWrite: (_pin, _val, _isAnalog) => {},
+          onSerialWrite: (dataString) => {
+            // Log raw output
+            setSerialLogs(prev => {
+              const current = [...prev];
+              if (current.length > 50) current.shift();
+              return [...current, dataString.trim()];
+            });
+
+            // Line-buffering stream solver to handle fragmented Serial prints
+            serialRxBufferRef.current += dataString;
+            let lines = serialRxBufferRef.current.split('\n');
+            serialRxBufferRef.current = lines.pop(); // Keep last fragment
+
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (trimmed.startsWith('D:')) {
+                const distVal = parseFloat(trimmed.substring(2));
+                if (!isNaN(distVal)) {
+                  handlePiSerialReceive(distVal);
+                }
+              }
+            }
+          },
+          getSensorDistance: () => {
+            return stateRef.current.robotState.sensorDistance;
+          },
+          onError: (err) => {
+            setSerialLogs(prev => [...prev, `⚠️ [Runtime Error] ${err}`]);
+            setSimulationRunning(false);
+          },
+          onDebug: (msg) => {
+            setSerialLogs(prev => [...prev, `[Debug] ${msg}`]);
+          }
+        });
+
+        activeArduinoRunner.current = runner;
+        setSerialLogs(prev => [...prev, '✅ Upload complete. Sketch running.']);
+      } catch (err) {
+        setSerialLogs(prev => [...prev, `❌ Compilation Failed: ${err.message}`]);
+      }
+      setIsCompiling(false);
+    }, 800);
+  }, [arduinoCode, handlePiSerialReceive]);
+
+  const clearLogs = useCallback(() => setSerialLogs([]), []);
+  const sendSerialInput = useCallback((cmd) => {
+    if (activeArduinoRunner.current) activeArduinoRunner.current.sendSerial(cmd);
+  }, []);
+  const clearPiLogs = useCallback(() => setPiLogs([]), []);
 
   // 60FPS physics loop
   useEffect(() => {
@@ -663,10 +669,8 @@ void driveMotors(float left, float right) {
                 setCode={setArduinoCode}
                 onUpload={handleCompileAndUpload}
                 serialLogs={serialLogs}
-                clearLogs={() => setSerialLogs([])}
-                sendSerialInput={(cmd) => {
-                  if (activeArduinoRunner.current) activeArduinoRunner.current.sendSerial(cmd);
-                }}
+                clearLogs={clearLogs}
+                sendSerialInput={sendSerialInput}
                 isCompiling={isCompiling}
               />
             )}
@@ -685,7 +689,7 @@ void driveMotors(float left, float right) {
                 models={ollamaModels}
                 setModels={setOllamaModels}
                 piLogs={piLogs}
-                clearPiLogs={() => setPiLogs([])}
+                clearPiLogs={clearPiLogs}
                 mentalMap={mentalMap}
                 setMentalMap={setMentalMap}
                 anomalyDetected={anomalyDetected}
