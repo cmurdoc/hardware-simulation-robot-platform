@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, memo } from 'react';
 import { Cpu, RefreshCw, CheckCircle2, AlertTriangle, Terminal, Eye, MessageSquare } from 'lucide-react';
 import { ollamaService } from '../services/ollamaService';
 
@@ -75,7 +75,7 @@ Kinematics Guidelines:
   }
 };
 
-export default function OllamaConsole({
+const OllamaConsole = memo(function OllamaConsole({
   endpoint,
   setEndpoint,
   selectedModel,
@@ -364,4 +364,6 @@ export default function OllamaConsole({
       </div>
     </div>
   );
-}
+});
+
+export default OllamaConsole;
