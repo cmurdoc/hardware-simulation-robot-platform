@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, memo } from 'react';
 import { Cpu, RefreshCw, CheckCircle2, AlertTriangle, Terminal, Eye, MessageSquare } from 'lucide-react';
 import { ollamaService } from '../services/ollamaService';
 
@@ -75,7 +75,9 @@ Kinematics Guidelines:
   }
 };
 
-export default function OllamaConsole({
+// ⚡ Bolt: Wrapped OllamaConsole in React.memo to prevent unnecessary re-renders.
+// memoizing it isolates it from the fast physics tick in App.jsx.
+export default memo(function OllamaConsole({
   endpoint,
   setEndpoint,
   selectedModel,
@@ -364,4 +366,4 @@ export default function OllamaConsole({
       </div>
     </div>
   );
-}
+});

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { Download, Code, Play, RefreshCw, Terminal } from 'lucide-react';
 
 const TEMPLATES = {
@@ -384,7 +384,9 @@ void driveMotors(float left, float right) {
   }
 };
 
-export default function ArduinoEditor({
+// ⚡ Bolt: Wrapped ArduinoEditor in React.memo to prevent unnecessary re-renders.
+// memoizing it isolates it from the fast physics tick in App.jsx.
+export default memo(function ArduinoEditor({
   code,
   setCode,
   onUpload,
@@ -525,4 +527,4 @@ export default function ArduinoEditor({
       </div>
     </div>
   );
-}
+});
