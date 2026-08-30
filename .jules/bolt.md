@@ -1,3 +1,6 @@
 ## 2024-05-24 - [React Render Starvation with 60FPS Physics Loop]
 **Learning:** The application features a 60FPS physics loop in `App.jsx` that frequently updates global state (`robotState`). The entire component tree was re-rendering 60 times per second, causing render starvation. Pure UI or computationally heavy child components (like SVG canvases in `WiringCanvas`) that do not depend on the fast-changing state must be wrapped in `React.memo()` to prevent unnecessary re-renders.
 **Action:** When implementing heavy visual components in a physics-based simulation architecture, always separate the fast-changing state from the static UI and use `React.memo()` to isolate updates.
+## 2024-05-25 - [Expensive Regex in Render Loop]
+**Learning:** Extracting heavy computations out of high-frequency render loops (like 60FPS tick cycles dependent on `robotState`) using `useMemo` avoids thread starvation.
+**Action:** Identify expensive parse loops inside `useEffect` or `render` and cache them using `useMemo` dependent only on variables that actually require re-computation.
