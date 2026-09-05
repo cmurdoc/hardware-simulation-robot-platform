@@ -1,8 +1,12 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, memo } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
-export default function SimulationArena3D({
+// ⚡ Bolt: Wrapped SimulationArena3D in React.memo to prevent unnecessary re-renders.
+// The parent App.jsx runs a 60FPS physics loop that updates robotState.
+// Since SimulationArena3D is a heavy WebGL component, memoizing it ensures it only re-renders
+// when its explicit props change, preventing render starvation and saving CPU cycles.
+export default memo(function SimulationArena3D({
   robotState,
   setRobotState,
   obstacles,
@@ -800,4 +804,4 @@ export default function SimulationArena3D({
       </div>
     </div>
   );
-}
+});
