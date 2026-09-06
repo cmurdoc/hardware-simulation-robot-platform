@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Play, Pause, RotateCcw, Cpu, Code, MapPin, Activity, ShieldAlert } from 'lucide-react';
 import WiringCanvas from './components/WiringCanvas';
 import SimulationArena3D from './components/SimulationArena3D';
@@ -104,6 +104,12 @@ Look closely at the attached image (your camera view) and the ultrasonic distanc
 
   // Buffer to accumulate fragmented serial data before line processing
   const serialRxBufferRef = useRef('');
+
+  const clearSerialLogs = useCallback(() => setSerialLogs([]), []);
+  const sendSerialInput = useCallback((cmd) => {
+    if (activeArduinoRunner.current) activeArduinoRunner.current.sendSerial(cmd);
+  }, []);
+  const clearPiLogs = useCallback(() => setPiLogs([]), []);
 
   // REF STATE SYNC
   const stateRef = useRef({});
@@ -663,10 +669,8 @@ void driveMotors(float left, float right) {
                 setCode={setArduinoCode}
                 onUpload={handleCompileAndUpload}
                 serialLogs={serialLogs}
-                clearLogs={() => setSerialLogs([])}
-                sendSerialInput={(cmd) => {
-                  if (activeArduinoRunner.current) activeArduinoRunner.current.sendSerial(cmd);
-                }}
+                clearLogs={clearSerialLogs}
+                sendSerialInput={sendSerialInput}
                 isCompiling={isCompiling}
               />
             )}
@@ -685,7 +689,7 @@ void driveMotors(float left, float right) {
                 models={ollamaModels}
                 setModels={setOllamaModels}
                 piLogs={piLogs}
-                clearPiLogs={() => setPiLogs([])}
+                clearPiLogs={clearPiLogs}
                 mentalMap={mentalMap}
                 setMentalMap={setMentalMap}
                 anomalyDetected={anomalyDetected}
