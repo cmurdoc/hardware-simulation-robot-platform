@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { Download, Code, Play, RefreshCw, Terminal } from 'lucide-react';
 
 const TEMPLATES = {
@@ -384,7 +384,7 @@ void driveMotors(float left, float right) {
   }
 };
 
-export default function ArduinoEditor({
+export default memo(function ArduinoEditor({
   code,
   setCode,
   onUpload,
@@ -421,6 +421,9 @@ export default function ArduinoEditor({
     }
   };
 
+  // ⚡ Bolt: Wrapped ArduinoEditor in React.memo to prevent unnecessary re-renders.
+  // The parent App.jsx runs a 60FPS physics loop that updates robotState.
+  // Memoizing this UI component isolates it from fast physics ticks.
   return (
     <div className="flex flex-col h-full bg-slate-900 border border-slate-700/50 rounded-xl overflow-hidden shadow-2xl backdrop-blur-md">
       <div className="p-3 bg-slate-950/70 border-b border-slate-800/80 flex flex-wrap items-center justify-between gap-3">
@@ -525,4 +528,4 @@ export default function ArduinoEditor({
       </div>
     </div>
   );
-}
+});

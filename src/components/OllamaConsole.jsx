@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, memo } from 'react';
 import { Cpu, RefreshCw, CheckCircle2, AlertTriangle, Terminal, Eye, MessageSquare } from 'lucide-react';
 import { ollamaService } from '../services/ollamaService';
 
@@ -75,7 +75,7 @@ Kinematics Guidelines:
   }
 };
 
-export default function OllamaConsole({
+export default memo(function OllamaConsole({
   endpoint,
   setEndpoint,
   selectedModel,
@@ -143,6 +143,9 @@ export default function OllamaConsole({
     refreshAI();
   }, [endpoint, customEndpoint, brainProvider, refreshAI]);
 
+  // ⚡ Bolt: Wrapped OllamaConsole in React.memo to prevent unnecessary re-renders.
+  // The parent App.jsx runs a 60FPS physics loop that updates robotState.
+  // Memoizing this UI component isolates it from fast physics ticks.
   return (
     <div className="flex flex-col h-full bg-slate-900 border border-slate-700/50 rounded-xl overflow-hidden shadow-2xl backdrop-blur-md">
       {/* Top configuration panel */}
@@ -364,4 +367,4 @@ export default function OllamaConsole({
       </div>
     </div>
   );
-}
+});
