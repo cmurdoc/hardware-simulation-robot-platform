@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Play, Pause, RotateCcw, Cpu, Code, MapPin, Activity, ShieldAlert } from 'lucide-react';
 import WiringCanvas from './components/WiringCanvas';
 import SimulationArena3D from './components/SimulationArena3D';
@@ -104,6 +104,13 @@ Look closely at the attached image (your camera view) and the ultrasonic distanc
 
   // Buffer to accumulate fragmented serial data before line processing
   const serialRxBufferRef = useRef('');
+
+  // Stable callback definitions for React.memo optimization
+  const clearLogsCallback = useCallback(() => setSerialLogs([]), []);
+  const sendSerialInputCallback = useCallback((cmd) => {
+    if (activeArduinoRunner.current) activeArduinoRunner.current.sendSerial(cmd);
+  }, []);
+  const clearPiLogsCallback = useCallback(() => setPiLogs([]), []);
 
   // REF STATE SYNC
   const stateRef = useRef({});
@@ -275,7 +282,7 @@ void driveMotors(float left, float right) {
   };
 
   // Compile and upload Arduino Sketch
-  const handleCompileAndUpload = () => {
+  const handleCompileAndUpload = useCallback(() => {
     setIsCompiling(true);
     setSerialLogs(prev => [...prev, '--- Compiling Arduino Sketch C++ ---']);
     
@@ -334,7 +341,8 @@ void driveMotors(float left, float right) {
       }
       setIsCompiling(false);
     }, 800);
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [arduinoCode]);
 
   // Pi 5 Serial Listener (utilizes live stateRef variables)
   const handlePiSerialReceive = async (distance) => {
@@ -663,10 +671,8 @@ void driveMotors(float left, float right) {
                 setCode={setArduinoCode}
                 onUpload={handleCompileAndUpload}
                 serialLogs={serialLogs}
-                clearLogs={() => setSerialLogs([])}
-                sendSerialInput={(cmd) => {
-                  if (activeArduinoRunner.current) activeArduinoRunner.current.sendSerial(cmd);
-                }}
+                clearLogs={clearLogsCallback}
+                sendSerialInput={sendSerialInputCallback}
                 isCompiling={isCompiling}
               />
             )}
@@ -685,7 +691,7 @@ void driveMotors(float left, float right) {
                 models={ollamaModels}
                 setModels={setOllamaModels}
                 piLogs={piLogs}
-                clearPiLogs={() => setPiLogs([])}
+                clearPiLogs={clearPiLogsCallback}
                 mentalMap={mentalMap}
                 setMentalMap={setMentalMap}
                 anomalyDetected={anomalyDetected}
